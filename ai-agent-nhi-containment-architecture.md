@@ -28,17 +28,33 @@ Below is a production-ready AWS IAM policy baseline for an AI Agent.
 **What this does:** It restricts the agent to accessing *only* data explicitly tagged for AI consumption, forces the session to originate from a designated secure VPC, and strictly limits the session duration.
 
 ```json
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "RestrictToAITaggedResourcesOnly",
+      "Sid": "AllowOnlyAIClearedS3Objects",
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject",
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::YOUR-AI-DATA-BUCKET/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ExistingObjectTag/DataClassification": "AI-Cleared-Public"
+        }
+      }
+    },
+    {
+      "Sid": "AllowOnlyAIClearedDynamoDBTables",
+      "Effect": "Allow",
+      "Action": [
         "dynamodb:Query"
       ],
-      "Resource": "*",
+      "Resource": [
+        "arn:aws:dynamodb:*:*:table/YOUR-AI-DATA-TABLE",
+        "arn:aws:dynamodb:*:*:table/YOUR-AI-DATA-TABLE/index/*"
+      ],
       "Condition": {
         "StringEquals": {
           "aws:ResourceTag/DataClassification": "AI-Cleared-Public"
@@ -46,26 +62,22 @@ Below is a production-ready AWS IAM policy baseline for an AI Agent.
       }
     },
     {
-      "Sid": "DenyUnapprovedNetworkOrigins",
+      "Sid": "DenyRequestsOutsideApprovedVPCEndpoint",
       "Effect": "Deny",
-      "Action": "*",
+      "Action": [
+        "s3:*",
+        "dynamodb:*"
+      ],
       "Resource": "*",
       "Condition": {
-        "NotIpAddress": {
-          "aws:SourceIp": "10.0.50.0/24"
-        }
-      }
-    },
-    {
-      "Sid": "EnforceShortLivedSessions",
-      "Effect": "Deny",
-      "Action": "*",
-      "Resource": "*",
-      "Condition": {
-        "NumericGreaterThan": {
-          "aws:TokenIssueTime": "3600"
+        "StringNotEquals": {
+          "aws:SourceVpce": "vpce-REPLACE_WITH_APPROVED_ENDPOINT_ID"
+        },
+        "Bool": {
+          "aws:PrincipalIsAWSService": "false"
         }
       }
     }
   ]
 }
+```
