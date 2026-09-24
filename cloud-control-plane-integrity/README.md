@@ -280,3 +280,11 @@ Future work can add provider-specific adapters, policy packs, severity classific
 The core idea stays simple:
 
 # **No approved state. No trust.**
+
+### Cloud Control-Plane Integrity
+
+**No approved state. No trust.**
+
+An open reference architecture for continuously detecting, classifying, and reconciling unauthorized cloud infrastructure changes.
+
+→ [Read the architecture](./cloud-control-plane-integrity/)
